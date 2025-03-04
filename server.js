@@ -659,18 +659,18 @@ app.get('/admin', authenticateToken, (req, res) => {
 
 // Rota para registrar um novo funcionario
 app.post('/admin/funcionarios', authenticateToken, async (req, res) => {
-    const { nome, email, senha } = req.body;
+    const { nome, telefone, email, senha } = req.body;
 
     try {
         // Verifica se o usuário atual é um administrador
-        if (req.user.roles !== 'admin') {
+        if (!adminEmails.includes(req.user.email)) {
             return res.status(403).json({ message: 'Acesso negado' });
         }
 
         // Insere o novo funcionario no banco de dados
         await db.query(
-            `INSERT INTO usuarios (nome, email, senha, role) VALUES (?, ?, ?, 'funcionario')`,
-            [nome, email, senha]
+            `INSERT INTO usuarios (nome, telefone, email, senha, role) VALUES (?, ?, ?, ?, 'funcionario')`,
+            [nome, telefone, email, senha]
         );
 
         res.status(201).json({ message: 'Funcionário registrado com sucesso' });

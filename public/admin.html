@@ -119,6 +119,8 @@
     <h2>Horários Bloqueados</h2>
     <ul id="bloqueios-list">Carregando...</ul>
 
+    <button id="btnRegistrarFuncionario" class="btn btn-primary">Registrar Funcionário</button>
+
     <h2>Lista de Funcionários</h2>
     <ul id="funcionarios-list"></ul>
 
@@ -281,6 +283,10 @@
             }
         }
 
+        document.getElementById('btnRegistrarFuncionario').addEventListener('click', function() {
+            window.location.href = 'registrar-funcionario.html';
+        });
+        
         async function carregarFuncionarios() {
             const token = localStorage.getItem('token');
             const res = await fetch('http://localhost:3000/funcionarios', {
