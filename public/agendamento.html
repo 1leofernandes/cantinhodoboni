@@ -1,0 +1,554 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento - Cantinho do Boni</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            padding-bottom: 60px; /* Espaço para o botão fixo */
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        /* Botão de logout sempre visível */
+        #logout-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 4px 15px;
+            background-color: #d80101;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 5px;
+        }
+        #logout-btn:hover {
+            background-color: #9b0000;
+        }
+    
+        .container {
+            max-width: 600px;
+            margin-bottom: 80px;
+            padding-bottom: 80px;
+        }
+    
+        h2, h4 {
+            text-align: center;
+        }
+    
+        .btn-primary {
+            background-color: #ff8800;
+            font-weight: bold;
+            border: none;
+        }
+    
+        .btn-primary:hover {
+            background-color: #dd7600;
+        }
+    
+        /* Header estilizada */
+        .header {
+            width: 100%;
+            height: 420px;
+            background-color: #27272a;
+            background-image: url("assets/header.png");
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+    
+        .header img {
+            width: 128px;
+            height: 128px;
+            border-radius: 50%;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease-in-out;
+        }
+    
+        .header img:hover {
+            transform: scale(1.1);
+        }
+    
+        .header h1 {
+            font-size: 28px;
+            margin-top: 16px;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: white;
+        }
+    
+        .header span {
+            color: white;
+            font-weight: 500;
+        }
+    
+        .header .date-box {
+            background-color: #16a34a;
+            padding: 8px 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+    
+        .header .date-box span {
+            color: white;
+            font-weight: 500;
+        }
+    
+        /* Fundo escuro quando a lista de agendamentos está aberta */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+    
+        /* Estilo da lista de agendamentos */
+        #lista-agendamentos {
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-height: 300px;
+            background: white;
+            box-shadow: 0px -2px 6px rgba(0, 0, 0, 0.3);
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            padding: 15px;
+        }
+    
+        /*#lista-agendamentos .close-btn {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            color: red;
+            font-weight: bold;
+        }*/
+    
+        /* Botão "Meus Agendamentos" fixo na parte inferior */
+        #btn-meus-agendamentos {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #ff0000;
+            color: white;
+            font-weight: bold;
+            padding: 15px;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            z-index: 1001;
+        }
+    
+        #btn-meus-agendamentos:hover {
+            background-color: #9c0202;
+        }
+        .nomeuser {
+            font-weight: bold;
+        }
+    
+    </style>
+    
+    <body>
+        <header class="header">
+            <button id="logout-btn" onclick="logout()">Sair</button>
+            <img src="assets/LogoLogin.png" alt="LogoLogin" />
+            <h1>Agendamento - Quadras</h1>
+            <a href="https://maps.app.goo.gl/wcYHGHWd6uQUk12f6" target="_blank" style="color: white; text-decoration: underline;">
+                <span>Av. Anápolis - QD 41 - LT 15</span><br>
+                <span>Parque das Amendoeiras - Goiânia</span>
+            </a>
+            <div class="date-box" id="date-span">
+                <span>Seg a Sab das 18:00 as 23:30</span>
+            </div>
+        </header>
+    
+        <div class="container mt-5 form-container">
+            <h2 id="nomeUsuario" class="nomeuser">Olá, usuário!</h2>
+            <h4 class="nomeuser">Agende seu horário</h4>
+            <form id="agendamentoForm">
+                <div class="mb-3">
+                    <label for="data" class="form-label">Escolha o dia</label>
+                    <input type="date" class="form-control" id="data" required>
+                </div>
+                <div class="mb-3">
+                    <label for="quadra" class="form-label">Selecione a quadra</label>
+                    <select class="form-control" id="quadra" required>
+                        <option value="">Selecione a quadra</option>
+                        <option value="1">Quadra 1</option>
+                        <option value="2">Quadra 2</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="horaInicio" class="form-label">Escolha a hora de início</label>
+                    <select class="form-control" id="horaInicio" required></select>
+                </div>
+                <div class="mb-3">
+                    <label for="horaFim" class="form-label">Escolha a hora final</label>
+                    <select class="form-control" id="horaFim" required></select>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Agendar</button>
+                </div>
+            </form>
+        </div>
+        
+
+        <!-- Botão fixo "Meus Agendamentos" -->
+        <button id="btn-meus-agendamentos">
+            Meus Agendamentos
+        </button>
+
+
+        <!-- Lista de agendamentos -->
+        <div id="lista-agendamentos"  style="display: none; max-height: 200px; overflow-y: auto;">
+            <h5 class="card-title">Meus Agendamentos</h5>
+            <div id="conteudo-agendamentos">
+                <!-- Agendamentos serão carregados aqui -->
+            </div>
+        </div>
+    
+
+    <script>
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        }
+
+        const nomeUsuario = localStorage.getItem('nome');
+        if (nomeUsuario) {
+            document.getElementById('nomeUsuario').textContent = `Olá, ${nomeUsuario}`;
+        }
+    
+        const form = document.getElementById('agendamentoForm');
+        const selectHoraInicio = document.getElementById('horaInicio');
+        const selectHoraFim = document.getElementById('horaFim');
+        const inputData = document.getElementById('data');
+        const selectQuadra = document.getElementById('quadra');
+    
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+    
+        // Função para carregar horários ocupados
+        async function carregarHorariosOcupados(data) {
+            try {
+                const response = await fetch(`http://localhost:3000/horarios-ocupados?data=${data}`);
+                if (!response.ok) throw new Error('Erro ao carregar horários ocupados');
+                return await response.json();
+            } catch (error) {
+                console.error('Erro:', error);
+                return [];
+            }
+        }
+    
+        // Função para carregar horários bloqueados
+        async function carregarHorariosBloqueados(data) {
+            try {
+                const response = await fetch(`http://localhost:3000/horarios-bloqueados?data=${data}`);
+                if (!response.ok) throw new Error('Erro ao carregar horários bloqueados');
+                return await response.json();
+            } catch (error) {
+                console.error('Erro:', error);
+                return [];
+            }
+        }
+    
+        // Gera lista de horários disponíveis
+        function gerarHorarios(diaDaSemana) {
+            let horarios = [];
+            let inicio = 18;
+            let fim = (diaDaSemana >= 3 && diaDaSemana <= 6) ? 26 : 23; // Quinta a sábado até 2h da manhã
+    
+            for (let h = inicio; h <= fim; h++) {
+                for (let m = 0; m < 60; m += 30) {
+                    if (h === fim && m > 0) break;
+                    let horaFormatada = `${String(h % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                    horarios.push(horaFormatada);
+                }
+            }
+            return horarios;
+        }
+    
+        // Função para normalizar horários (remove segundos, se houver)
+        function normalizarHorario(horario) {
+            return horario.split(':').slice(0, 2).join(':'); // Remove os segundos
+        }
+    
+        // Filtra os horários ocupados e bloqueados
+        async function atualizarHorariosDisponiveis() {
+            const dataSelecionada = inputData.value;
+            if (!dataSelecionada) return;
+    
+            const dataFormatada = new Date(dataSelecionada);
+            const diaDaSemana = dataFormatada.getDay();
+            const responseOcupados = await carregarHorariosOcupados(dataSelecionada);
+            const responseBloqueados = await carregarHorariosBloqueados(dataSelecionada);
+    
+            console.log("Resposta da API (ocupados):", responseOcupados);
+            console.log("Resposta da API (bloqueados):", responseBloqueados);
+    
+            selectHoraInicio.innerHTML = '<option value="">Selecione um horário</option>';
+            selectHoraFim.innerHTML = '<option value="">Selecione a hora final</option>';
+    
+            let horariosInicio = gerarHorarios(diaDaSemana);
+            let quadraSelecionada = selectQuadra.value;
+    
+            let horariosOcupados = [];
+            let bloqueios = responseBloqueados?.horariosBloqueados ?? [];
+    
+            if (quadraSelecionada === "1") {
+                horariosOcupados = responseOcupados.horariosOcupadosQuadra1 || [];
+            } else if (quadraSelecionada === "2") {
+                horariosOcupados = responseOcupados.horariosOcupadosQuadra2 || [];
+            }
+    
+            // Normaliza os horários bloqueados (remove segundos, se houver)
+            let horariosBloqueadosNormalizados = bloqueios.map(normalizarHorario);
+    
+            let horariosDisponiveis = horariosInicio.filter(hora => {
+                // Verifica se o horário está ocupado ou bloqueado
+                return !horariosOcupados.includes(hora) && !horariosBloqueadosNormalizados.includes(hora);
+            });
+    
+            horariosDisponiveis.forEach(hora => {
+                let option = document.createElement('option');
+                option.value = hora;
+                option.textContent = hora;
+                selectHoraInicio.appendChild(option);
+            });
+    
+            console.log("Horários ocupados:", horariosOcupados);
+            console.log("Horários bloqueados:", horariosBloqueadosNormalizados);
+            console.log("Horários disponíveis:", horariosDisponiveis);
+        }
+    
+        inputData.addEventListener('change', atualizarHorariosDisponiveis);
+        selectQuadra.addEventListener('change', atualizarHorariosDisponiveis);
+    
+        selectHoraInicio.addEventListener('change', async () => {
+            const horaSelecionada = selectHoraInicio.value;
+            if (!horaSelecionada) return;
+    
+            const dataSelecionada = inputData.value;
+            if (!dataSelecionada) return;
+    
+            const dataFormatada = new Date(dataSelecionada);
+            const diaDaSemana = dataFormatada.getDay();
+            const responseOcupados = await carregarHorariosOcupados(dataSelecionada);
+            const responseBloqueados = await carregarHorariosBloqueados(dataSelecionada);
+    
+            console.log("Resposta da API (ocupados):", responseOcupados);
+            console.log("Resposta da API (bloqueados):", responseBloqueados);
+    
+            selectHoraFim.innerHTML = '<option value="">Selecione a hora final</option>';
+    
+            let horarios = gerarHorarios(diaDaSemana);
+            let indexInicio = horarios.indexOf(horaSelecionada);
+            let duracaoServico = 1 * 60 * 60 * 1000;
+    
+            let bloqueios = responseBloqueados?.horariosBloqueados ?? [];
+    
+            // Normaliza os horários bloqueados (remove segundos, se houver)
+            let horariosBloqueadosNormalizados = bloqueios.map(normalizarHorario);
+    
+            let horariosDisponiveis = horarios.slice(indexInicio + 1).filter(hora => {
+                let [h, m] = hora.split(':').map(Number);
+                let dataHora = new Date(2000, 0, 1, h, m);
+                let dataHoraFim = new Date(dataHora.getTime() + duracaoServico);
+                let horaFimFormatada = `${String(dataHoraFim.getHours()).padStart(2, '0')}:${String(dataHoraFim.getMinutes()).padStart(2, '0')}`;
+    
+                // Verifica se o horário final está ocupado ou bloqueado
+                return !responseOcupados.horariosOcupadosQuadra1?.includes(horaFimFormatada) &&
+                       !responseOcupados.horariosOcupadosQuadra2?.includes(horaFimFormatada) &&
+                       !horariosBloqueadosNormalizados.includes(horaFimFormatada);
+            });
+    
+            horariosDisponiveis.forEach(hora => {
+                let option = document.createElement('option');
+                option.value = hora;
+                option.textContent = hora;
+                selectHoraFim.appendChild(option);
+            });
+    
+            console.log("Horários finais disponíveis:", horariosDisponiveis);
+        });
+    
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+    
+            const usuario_id = localStorage.getItem('usuario_id');
+            const data_agendada = inputData.value;
+            const hora_inicio = selectHoraInicio.value;
+            const hora_fim = selectHoraFim.value;
+            const quadra = selectQuadra.value;
+    
+            if (!usuario_id || !data_agendada || !hora_inicio || !hora_fim || !quadra) {
+                alert('Preencha todos os campos antes de agendar.');
+                return;
+            }
+    
+            try {
+                const response = await fetch('http://localhost:3000/agendar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        usuario_id,
+                        data_agendada,
+                        hora_inicio,
+                        hora_fim,
+                        quadra
+                    }),
+                });
+    
+                const result = await response.json();
+    
+                if (response.ok) {
+                    alert('Agendamento realizado com sucesso!');
+                    window.location.reload();
+                } else {
+                    alert(`Erro: ${result.message}`);
+                }
+            } catch (error) {
+                console.error('Erro ao enviar agendamento:', error);
+                alert('Ocorreu um erro ao agendar. Tente novamente.');
+            }
+        });
+        async function carregarMeusAgendamentos() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    console.error('Token não encontrado.');
+                    return;
+                }
+
+                const response = await fetch('http://localhost:3000/meus-agendamentos', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar agendamentos.');
+                }
+
+                const agendamentos = await response.json();
+                exibirAgendamentos(agendamentos);
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        }
+
+
+
+        // Função para exibir os agendamentos
+        // Função para exibir os agendamentos com botão de remoção
+        function exibirAgendamentos(agendamentos) {
+            const conteudoAgendamentos = document.getElementById('conteudo-agendamentos');
+            conteudoAgendamentos.innerHTML = ''; // Limpa o conteúdo atual
+
+            if (agendamentos.length === 0) {
+                conteudoAgendamentos.innerHTML = '<p>Nenhum agendamento encontrado.</p>';
+                return;
+            }
+
+            agendamentos.forEach(agendamento => {
+                console.log(agendamento);
+                const item = document.createElement('div');
+                item.className = 'mb-2 flex items-center justify-between';
+
+                // Formata a data para exibir apenas YYYY-MM-DD
+                const dataFormatada = agendamento.data_agendada.split('T')[0];
+
+                item.innerHTML = `
+                    <div>
+                        <strong>Data:</strong> ${dataFormatada} <br>
+                        <strong>Horário:</strong> ${agendamento.hora_inicio} às ${agendamento.hora_fim} <br>
+                        <strong>Quadra:</strong> ${agendamento.quadra}
+                    </div>
+                    <button class="remove"
+                        onclick="removerAgendamento(${agendamento.id})">
+                        Cancelar
+                    </button>
+                    <style>
+                        .remove{
+                            background-color: red;
+                            color: white;
+                            box-shadow: none;
+                            border: 0
+                            px-3 py-1 rounded hover:bg-red-700
+                        }
+                        .remove:hover{
+                            background-color: #b30000;
+                            box-shadow: none;
+                        }
+                    </style>
+                `;
+
+                conteudoAgendamentos.appendChild(item);
+            });
+        }
+
+
+        // Função para remover um agendamento
+        async function removerAgendamento(agendamentoId) {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    console.error('Token não encontrado.');
+                    return;
+                }
+
+                const response = await fetch(`http://localhost:3000/cancelar-agendamento/${agendamentoId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao remover agendamento.');
+                }
+
+                // Atualiza a lista de agendamentos após remoção
+                carregarMeusAgendamentos();
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        }
+
+
+        // Evento para exibir/ocultar a lista de agendamentos
+        document.getElementById('btn-meus-agendamentos').addEventListener('click', () => {
+            const listaAgendamentos = document.getElementById('lista-agendamentos');
+            if (listaAgendamentos.style.display === 'none') {
+                listaAgendamentos.style.display = 'block'; // Exibe a lista
+                carregarMeusAgendamentos(); // Carrega os agendamentos
+            } else {
+                listaAgendamentos.style.display = 'none'; // Oculta a lista
+            }
+        });
+
+        // Carrega os agendamentos ao carregar a página (opcional)
+        document.addEventListener('DOMContentLoaded', carregarMeusAgendamentos);
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login de Administrador</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        h2 {
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            width: 300px;
+            border-radius: 20px;
+        }
+        input {
+            margin-bottom: 10px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 20px;
+        }
+        button {
+            padding: 10px;
+            font-size: 16px;
+            background-color: #ff0000;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #910303;
+        }
+        #error-message {
+            color: red;
+            margin-top: 10px;
+        }
+        .logoLogin {
+            max-width: 100%;
+            height: auto;
+            max-height: 400px;
+            margin-bottom: 15px;
+            margin-left: auto;
+            margin-right: auto;
+
+        }
+        .logoCountainer {
+            padding: 20px;
+        }
+        #logout-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 4px 15px;
+            background-color: #d80101;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 5px;
+        }
+        #logout-btn:hover {
+            background-color: #9b0000;
+        }
+    </style>
+</head>
+<body>
+    <button id="logout-btn" onclick="logout()">Sair</button>
+    <div class="logoCountainer">
+        <img src="/agendamento-resenha/public/assets/LogoLogin.png" alt="logoLogin" class="logoLogin">
+    </div>
+    <h2>Login de Administrador</h2>
+    <form id="adminLoginForm">
+        <input type="email" id="email" name="email" placeholder="E-mail" required>
+        <input type="password" id="password" name="password" placeholder="Senha" required>
+        <button type="submit">Entrar</button>
+    </form>
+    <p id="error-message"></p>
+
+    <script>
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        }
+
+        document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
+
+            try {
+                const res = await fetch('http://localhost:3000/admin-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await res.json();
+
+                if (res.ok && data.isAdmin) {
+                    // Armazena o token no localStorage
+                    localStorage.setItem('token', data.token);
+                    window.location.href = 'admin.html'; // Redireciona para a página de administração
+                } else {
+                    errorMessage.textContent = data.message || 'Acesso negado';
+                }
+            } catch (error) {
+                console.error('Erro no login de administrador:', error);
+                errorMessage.textContent = 'Erro no servidor. Tente novamente mais tarde.';
+            }
+        });
+    </script>
+</body>
+</html>

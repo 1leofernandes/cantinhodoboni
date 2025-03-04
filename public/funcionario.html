@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Funcionários</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: white;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        #logout-btn {
+            position: absolute;
+            top: 3px;
+            left: 10px;
+            padding: 8px 15px;
+            background-color: #d40303;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 5px;
+        }
+
+        #logout-btn:hover {
+            background-color: #a50505;
+        }
+
+        h2 {
+            color: #e60202;
+            margin-top: 30px;
+        }
+
+        button {
+            background-color: #ffcc00;
+            color: #333;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background-color: #e6b800;
+        }
+
+        input[type="date"], input[type="time"] {
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        #mensagem {
+            margin-top: 10px;
+            color: #ff4d4d;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul#agendamentos-list li, ul#bloqueios-list li {
+            background-color: #f9f9f9;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        ul#bloqueios-list li button {
+            background-color: #da0404;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        ul#bloqueios-list li button:hover {
+            background-color: #cc0000;
+        }
+    </style>
+</head>
+<body>
+    <button id="logout-btn" onclick="logout()">Sair</button>
+
+    <h2>Agendamentos</h2>
+    <ul id="agendamentos-list">Carregando...</ul>
+
+    <h2>Bloquear Agendamentos</h2>
+    <div>
+        <label>Data:</label>
+    </div>
+    <div>
+        <input type="date" id="data-bloqueio">
+    </div>
+    <button onclick="bloquearDia()">Bloquear Dia</button>
+    <br><br>
+    <div>
+        <label>Hora Início:</label>
+        <input type="time" id="hora-inicio">
+        <label>Hora Fim:</label>
+        <input type="time" id="hora-fim">
+    </div>
+    <button onclick="bloquearHorario()">Bloquear Horário</button>
+
+    <div id="mensagem"></div>
+
+    <h2>Horários Bloqueados</h2>
+    <ul id="bloqueios-list">Carregando...</ul>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            validarUsuario();
+            carregarAgendamentos();
+            carregarBloqueios();
+        });
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        }
+
+        async function validarUsuario() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Você não está logado. Redirecionando para o login...');
+                window.location.href = 'login.html';
+                return;
+            }
+            try {
+                const res = await fetch('http://localhost:3000/user-info', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Erro ao validar usuário.');
+                const data = await res.json();
+                if (data.role !== 'funcionario') {
+                    alert('Acesso negado. Somente funcionários podem acessar esta página.');
+                    window.location.href = '/login.html';
+                    return;
+                }
+            } catch (error) {
+                console.error('Erro na autenticação:', error);
+                alert('Erro na autenticação. Tente novamente.');
+                window.location.href = 'login.html';
+            }
+        }
+
+        async function carregarAgendamentos() {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch('http://localhost:3000/agendamentos', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Erro ao carregar agendamentos.');
+                const agendamentos = await res.json();
+                const lista = document.getElementById('agendamentos-list');
+                lista.innerHTML = agendamentos.length
+                    ? agendamentos.map(a => 
+                        `<li>
+                            <strong>Cliente:</strong> ${a.nome_cliente} - ${a.telefone_cliente} <br>
+                            <strong>Data:</strong> ${new Date(a.data_agendada).toLocaleDateString('pt-BR')}<br>
+                            <strong>Horário:</strong> ${a.hora_inicio} - ${a.hora_fim} <br>
+                            <strong>Quadra:</strong> ${a.quadra}
+                        </li>`
+                    ).join('')
+                    : '<li>Sem agendamentos futuros.</li>';
+            } catch (error) {
+                console.error('Erro ao carregar agendamentos:', error);
+                document.getElementById('agendamentos-list').innerHTML = '<li>Erro ao carregar agendamentos.</li>';
+            }
+        }
+
+        async function bloquearDia() {
+            const data = document.getElementById('data-bloqueio').value;
+            if (!data) {
+                alert('Selecione uma data!');
+                return;
+            }
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch('http://localhost:3000/bloquear-dia', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ data })
+                });
+                const result = await res.json();
+                alert(result.message);
+                carregarBloqueios();
+            } catch (error) {
+                console.error('Erro ao bloquear dia:', error);
+                alert('Erro ao bloquear dia.');
+            }
+        }
+
+        async function bloquearHorario() {
+            const data = document.getElementById('data-bloqueio').value;
+            const hora_inicio = document.getElementById('hora-inicio').value;
+            const hora_fim = document.getElementById('hora-fim').value;
+            if (!data || !hora_inicio || !hora_fim) {
+                alert('Preencha todos os campos!');
+                return;
+            }
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch('http://localhost:3000/bloquear-horario', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ data, hora_inicio, hora_fim })
+                });
+                const result = await res.json();
+                alert(result.message);
+                carregarBloqueios();
+            } catch (error) {
+                console.error('Erro ao bloquear horário:', error);
+                alert('Erro ao bloquear horário.');
+            }
+        }
+
+        async function carregarBloqueios() {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('http://localhost:3000/bloqueios', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Erro ao carregar bloqueios.');
+                const bloqueios = await res.json();
+                const lista = document.getElementById('bloqueios-list');
+                lista.innerHTML = bloqueios.length ? bloqueios.map(b => 
+                    `<li>
+                        <strong>Data:</strong> ${new Date(b.data).toLocaleDateString('pt-BR')} <br>
+                        <strong>Horário:</strong> ${b.hora_inicio.slice(0,5)} - ${b.hora_fim.slice(0,5)} <br>
+                        <button onclick="removerBloqueio(${b.id})">Remover</button>
+                    </li>`
+                ).join('') : '<li>Sem bloqueios cadastrados.</li>';
+            } catch (error) {
+                console.error('Erro ao carregar bloqueios:', error);
+                document.getElementById('bloqueios-list').innerHTML = '<li>Erro ao carregar bloqueios.</li>';
+            }
+        }
+
+        async function removerBloqueio(id) {
+            const token = localStorage.getItem('token');
+            if (!confirm('Tem certeza que deseja remover este bloqueio?')) return;
+            try {
+                const res = await fetch(`http://localhost:3000/bloqueios/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const result = await res.json();
+                alert(result.message);
+                carregarBloqueios();
+            } catch (error) {
+                console.error('Erro ao remover bloqueio:', error);
+                alert('Erro ao remover bloqueio.');
+            }
+        }
+    </script>
+</body>
+</html>

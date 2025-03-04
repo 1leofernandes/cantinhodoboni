@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <title>Redefinir Senha</title>
+    <style>
+        .message {
+            color: green;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+
+        .logoLogin {
+            max-width: 100%;
+            height: auto;
+            max-height: 400px;
+            margin-bottom: 15px;
+            margin-left: auto;
+            margin-right: auto;
+
+        }
+        .logoCountainer {
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .btn-custom-red {
+            background-color: #af0e09;
+            color: white;
+            border: none;
+            font-weight: bold;
+            font-size: medium;
+        }
+
+        .btn-custom-red:hover {
+            background-color: #790e0b;
+            color: white;
+            font-weight: bold;
+        }
+        .form-label {
+            margin-right: 30px;
+
+        }
+        .custom-link {
+            color: #af0e09;
+            text-decoration: none;
+        }
+
+        .custom-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container 20px">
+        <h2 class="text-center">Redefinir Senha</h2>
+        <form id="resetForm">
+            <div class="mb-3">
+                <label for="senha" class="form-label">Nova Senha:</label>
+                <input type="password" id="senha" name="senha" class="form-control" placeholder="SuaSenha123" required>
+                <br>
+            </div>
+            <div class="mb-3">
+                <label for="confirmSenha" class="form-label">Confirme a Nova Senha:</label>
+                <input type="password" id="confirmSenha" name="confirmSenha" class="form-control" placeholder="SuaSenha123" required>
+                <br>
+            </div>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-custom-red">Redefinir Senha</button>
+            </div>
+        </form>
+        <p id="message" class="message" style="display: none;">Senha redefinida com sucesso! Redirecionando para a página de login...</p>
+    </div>
+    <script>
+        document.getElementById('resetForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const senha = document.getElementById('senha').value;
+            const confirmSenha = document.getElementById('confirmSenha').value;
+            
+            if (senha !== confirmSenha) {
+                alert('As senhas não coincidem.');
+                return;
+            }
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            try {
+                const response = await fetch(`/auth/resetar-senha/${token}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ senha })
+                });
+
+                if (response.ok) {
+                    const messageElement = document.getElementById('message');
+                    messageElement.style.display = 'block';
+
+                    // Espera 2 segundos antes de redirecionar
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
+                } else {
+                    alert('Erro ao redefinir a senha. Tente novamente.');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao redefinir a senha. Tente novamente.');
+            }
+        });
+    </script>
+</body>
+</html>
